@@ -1,5 +1,5 @@
 import { Menu, Dropdown, Button, Form, Input, Radio } from 'antd';
-//import './App.css';
+import './App.css';
 import 'antd/dist/antd.css';
 import { Component } from 'react';
 
@@ -11,20 +11,20 @@ class App extends Component {
       menuItems:[],
       subItems: [],
       isLoaded: false,
+      hideCountry: true,
     }
-    [useCountry, setUseCountry] = useState(false);
   }
 
   fetchSubItems = (code) => {
+
     
-    fetch("https://xc-ajax-demo.herokuapp.com/api/countries/" + code + "/states/")
+    fetch("https://xc-ajax-demo.herokuapp.com/api/countries/" + (code ? code + "/" : "") + "states/")
       .then(res => res.json())
       .then(
         (result) => {
-          console.log(result)
           this.setState({
             ...this.state,
-            subMenuItems: result
+            subItems: result
           });
         },
         (error) => {
@@ -33,6 +33,7 @@ class App extends Component {
           });
         }
       )
+
   }
 
   fetchItems = () => {
@@ -60,16 +61,14 @@ class App extends Component {
     const { SubMenu } = Menu;
 
     let items = this.state.menuItems;
-    let subItems = this.state.subItems;
-    console.log(items);
     return (
     <Menu triggerSubMenuAction="click" >
       {items.map((item, i)=> {
         return(
-          <SubMenu title={item.name} key={i} onTitleClick={()=>{this.fetchSubItems(item.code)}}>
+          <SubMenu className="submenu" title={item.name} key={i} onTitleClick={()=>{this.fetchSubItems(item.code)}}>
             {this.state.subItems.map((item, i) => {
               return(
-                <Menu.Item>{item.name}</Menu.Item>
+                <Menu.Item key={i}>{item.name}</Menu.Item>
               )
             })}
     </SubMenu>
@@ -84,30 +83,39 @@ class App extends Component {
   }
 
   onFinish = (values) => {
-    console.log(values);
 
     let postBody = {
       name: values.name,
-      id: values.type == "countries" ? this.state.menuItems.length + 1 : this.state.subItems.length + 1,
       code: values.code
     }
 
-    if(values.type == "state"){
+    if(values.type == "states"){
+      this.fetchSubItems(null);
       postBody = {
         ...postBody,
         countryId: values.countryId,
+        id: this.state.subItems.length + 1,
       }
     }
 
+    else {
+      postBody = {
+        ...postBody,
+        //id: this.state.menuItems.length,
+      }
+    }
+
+    console.log(postBody)
 
     fetch("https://xc-ajax-demo.herokuapp.com/api/" + values.type + "/", {
-      method: "POST",
-      headers: {
-        ...postBody,
-      }
+      method: 'POST',
+      body: JSON.stringify(postBody),
+      headers: {'Content-Type': 'application/json',
+      dataType: "json",}
     })
     .then(response => {
       this.fetchItems();
+      return response.json;
     })
     .catch(error => {
       console.log(error);
@@ -119,11 +127,11 @@ class App extends Component {
     return(
       this.state.isLoaded ? (
     <div className="App">
-      <Dropdown className = "dropdown" overlay={this.menu()} placement="bottomLeft" trigger="click">
+      <Dropdown.Button className = "dropdown" overlay={this.menu()} placement="bottomLeft" trigger="click">
       <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-      Dropdown Menu
+      View States
     </a>
-      </Dropdown>
+      </Dropdown.Button>
       <div>
       <Form
       name="add"
@@ -132,6 +140,7 @@ class App extends Component {
       }}
       onFinish={this.onFinish}
     >
+      <h3>Add New Country or State</h3>
       <Form.Item
         label="Name"
         name="name"
@@ -155,22 +164,21 @@ class App extends Component {
       >
         <Input />
       </Form.Item>
-
-      <Form.Item name="countryId" label="Country" hidden={this.useCountry}>
-        <Radio.Group>
-          {this.state.menuItems.map((item, i)=> {
-        return(
-            <Radio value={item.id}>{item.name}</Radio>
-          )}
-          )}
+      
+      <Form.Item name="type" label="Item Type">
+        <Radio.Group onChange={() => this.setState({...this.state, hideCountry: !this.state.hideCountry})}>
+          <Radio value="countries">Country</Radio>
+          <Radio value="states">State</Radio>
         </Radio.Group>
       </Form.Item>
 
-      
-      <Form.Item name="type" label="Item Type">
-        <Radio.Group onChange={() => this.setUseCountry(!this.useCountry)}>
-          <Radio value="countries">Country</Radio>
-          <Radio value="states">State</Radio>
+      <Form.Item name="countryId" label="Country" hidden={this.state.hideCountry} required={!this.state.hideCountry}>
+        <Radio.Group>
+          {this.state.menuItems.map((item, i)=> {
+        return(
+            <Radio key={i} value={item.id}>{item.name}</Radio>
+          )}
+          )}
         </Radio.Group>
       </Form.Item>
 

@@ -1,7 +1,13 @@
-.App {
-  background-color: LimeGreen;
-}
-
 .dropdown {
   align-self: center;
+  height: 200px;
+  background-color: #fff;
+}
+
+Form {
+  max-width: 50%;
+}
+
+div {
+  padding: 1%;
 }
