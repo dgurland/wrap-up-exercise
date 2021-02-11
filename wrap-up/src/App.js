@@ -101,7 +101,7 @@ class App extends Component {
     else {
       postBody = {
         ...postBody,
-        //id: this.state.menuItems.length,
+        id: this.state.menuItems.length,
       }
     }
 
