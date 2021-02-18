@@ -15,36 +15,39 @@ class App extends Component {
     }
   }
 
-  fetchSubItems = (code) => {
 
+
+  fetchSubItems = (code) => {
     
-    fetch("https://xc-ajax-demo.herokuapp.com/api/countries/" + (code ? code + "/" : "") + "states/")
+    fetch("https://localhost:5001/api/Countries/" + code + "/States")
       .then(res => res.json())
       .then(
         (result) => {
           this.setState({
-            ...this.state,
-            subItems: result
+            //...this.state,
+            subItems: result.sort(function(a,b) {
+              if(a.name < b.name) { return -1; }
+              if(a.name > b.name) { return 1; }
+              return 0;
+          })
           });
         },
         (error) => {
-          this.setState({
-            error
-          });
+          console.log(error);
         }
       )
 
   }
 
   fetchItems = () => {
-    fetch(" https://xc-ajax-demo.herokuapp.com/api/countries/")
+    fetch("https://localhost:5001/api/Countries")
     .then(res => res.json())
     .then(
       (result) => {
         this.setState({
           ...this.state,
           isLoaded: true,
-          menuItems: result
+          menuItems: result.sort()
         });
       },
       (error) => {
@@ -65,7 +68,7 @@ class App extends Component {
     <Menu triggerSubMenuAction="click" >
       {items.map((item, i)=> {
         return(
-          <SubMenu className="submenu" title={item.name} key={i} onTitleClick={()=>{this.fetchSubItems(item.code)}}>
+          <SubMenu title={item.name} key={i} onTitleClick={()=>{this.fetchSubItems(item.code)}}>
             {this.state.subItems.map((item, i) => {
               return(
                 <Menu.Item key={i}>{item.name}</Menu.Item>
@@ -89,25 +92,18 @@ class App extends Component {
       code: values.code
     }
 
-    if(values.type == "states"){
-      this.fetchSubItems(null);
+    if(values.type == "States"){
+
       postBody = {
         ...postBody,
         countryId: values.countryId,
-        id: this.state.subItems.length + 1,
       }
     }
 
-    else {
-      postBody = {
-        ...postBody,
-        id: this.state.menuItems.length,
-      }
-    }
 
     console.log(postBody)
 
-    fetch("https://xc-ajax-demo.herokuapp.com/api/" + values.type + "/", {
+    fetch("https://localhost:5001/api/" + values.type + "/", {
       method: 'POST',
       body: JSON.stringify(postBody),
       headers: {'Content-Type': 'application/json',
@@ -136,7 +132,7 @@ class App extends Component {
       <Form
       name="add"
       initialValues={{
-        type: "countries",
+        type: "Countries",
       }}
       onFinish={this.onFinish}
     >
@@ -167,8 +163,8 @@ class App extends Component {
       
       <Form.Item name="type" label="Item Type">
         <Radio.Group onChange={() => this.setState({...this.state, hideCountry: !this.state.hideCountry})}>
-          <Radio value="countries">Country</Radio>
-          <Radio value="states">State</Radio>
+          <Radio value="Countries">Country</Radio>
+          <Radio value="States">State</Radio>
         </Radio.Group>
       </Form.Item>
 
